@@ -1,0 +1,109 @@
+---
+driver:
+  name: docker
+  hostname: kitchen-salt.ci.local
+  use_sudo: false
+  privileged: true
+  socket:  'unix:///var/run/docker.sock' 
+  provision_command:
+    - apt-get update
+    - apt-get install python3 -y
+    - apt-get install python3-pip -y
+    - python3 -m pip install --upgrade pip
+    - python3 -m pip  install pytest testinfra
+    - mkdir -p /run/sshd
+provisioner:
+  name: salt_solo
+  salt_install: bootstrap
+  salt_version: latest
+  salt_bootstrap_url: https://bootstrap.saltstack.com
+  salt_bootstrap_options: -X -p git -p curl -p sudo
+  require_chef: false
+  gpg_key: test@example.com
+  gpg_home: gpgkeys
+  cache_commands:
+    - touch /tmp/cache_commands_test
+  init_environment: |
+    mkdir -p /home/kitchen/var/cache/salt/master
+  salt_copy_filter:
+    - .filter_hidden
+    - .circleci/
+    - Dockerfile
+    - .drone.yml
+    - .git/
+    - .gitignore
+    - .kitchen/
+    - .kitchen
+    - .kitchen.yml
+    - Gemfile
+    - Gemfile.lock
+    - requirements.txt
+    - tests/
+    - .travis.yml
+  #dependencies:
+    #- name: foo
+    #  path: ./modules/mysudo
+    #- name: nginx
+    #  repo: apt
+    #  package: salt-formula-nginx
+  is_file_root: true
+  salt_env:  preprod
+  salt_file_root : srv/salt
+  salt_pillar_root : srv/salt/pillar
+  formula:  .
+  state_top:
+    preprod:
+     "( G@environment:preprod ) and ( G@node_type:webserver )" :
+       - apache
+       - mysql.client
+       - mysql.python
+     "( G@environment:preprod ) and ( G@node_type:databse )" :
+       - mysql.server
+  pillars:
+    preprod:
+      "( G@environment:preprod ) and ( G@node_type:webserver )" :
+        - apache
+        - mysql.client
+        - mysql.python
+      "( G@environment:preprod ) and ( G@node_type:databse )" :
+        - mysql.server
+  pillars_from_directories:
+  - source:  ../pillar/
+    dest: srv/salt/pillar/
+  grains:
+    node_type: webserver
+    datacenter: us-west-2
+    environment: preprod
+ 
+startup_states: top
+
+platforms:
+   - name: docker-salt
+     driver:
+       image: docker-salt:latest
+       platform: ubuntu
+   - name: ubuntu-18.04
+     driver:
+       image: ubuntu:18.04
+       platform: ubuntu
+       run_command: '/usr/sbin/sshd -D -o UseDNS=no -o UsePAM=no -o PasswordAuthentication=yes -o PidFile=/tmp/sshd.pid'
+     provisioner:
+       salt_apt_repo: 'https://repo.saltstack.com/apt/ubuntu/18.04/amd64/'
+       salt_apt_repo_key: 'https://repo.saltstack.com/apt/ubuntu/18.04/amd64/latest/SALTSTACK-GPG-KEY.pub'
+       init_environment: |
+         sudo mkdir -p /tmp/kitchen/var/cache/salt/master
+         sudo apt-get update
+         DEBIAN_FRONTEND=noninteractive sudo apt-get install -y software-properties-common
+       salt_bootstrap_options: -X -p git -p curl -p sudo -p software-properties-common
+suites:
+   - name: basic
+     default_pattern: true
+     env_vars:
+       TARGET_HOST: 127.0.0.1
+       SUDO: false
+verifier:
+  name: shell
+  remote: true
+  command: |
+    #python3 -m pytest --junit-xml "junit-${KITCHEN_INSTANCE}.xml" --color=yes -v  "integration/${KITCHEN_SUITE}"
+    python3 -m pytest --hosts="docker://${KITCHEN_USERNAME}@${KITCHEN_CONTAINER_ID}" --junit-xml "junit-${KITCHEN_INSTANCE}.xml" --color=yes -v  "integration/${KITCHEN_SUITE}"

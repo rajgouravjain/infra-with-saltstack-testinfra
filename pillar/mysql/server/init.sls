@@ -1,3 +1,3 @@
-git:
-  client:
+mysql:
+  server:
     enabled: true

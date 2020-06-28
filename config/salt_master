@@ -1,0 +1,13 @@
+file_roots:
+##saltenv=dev or the minion has environment: dev
+  base:
+    - /srv/salt/
+  dev:
+    - /srv/salt/dev
+  qa:
+    - /srv/salt/qa
+  preprod:
+    - /srv/salt/preprod
+  prod:
+    - /srv/salt/prod
+
