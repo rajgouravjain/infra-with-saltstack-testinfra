@@ -50,7 +50,7 @@ provisioner:
   salt_env:  preprod
   salt_file_root : srv/salt
   salt_pillar_root : srv/salt/pillar
-  formula:  .
+  formula: . 
   state_top:
     preprod:
      "( G@environment:preprod ) and ( G@node_type:webserver )" :
@@ -60,13 +60,14 @@ provisioner:
      "( G@environment:preprod ) and ( G@node_type:databse )" :
        - mysql.server
   pillars:
-    preprod:
-      "( G@environment:preprod ) and ( G@node_type:webserver )" :
-        - apache
-        - mysql.client
-        - mysql.python
-      "( G@environment:preprod ) and ( G@node_type:databse )" :
-        - mysql.server
+    top.sls:
+      preprod:
+        "( G@environment:preprod ) and ( G@node_type:webserver )" :
+          - apache
+          - mysql.client
+          - mysql.python
+        "( G@environment:preprod ) and ( G@node_type:databse )" :
+          - mysql.server
   pillars_from_directories:
   - source:  ../pillar/
     dest: srv/salt/pillar/
