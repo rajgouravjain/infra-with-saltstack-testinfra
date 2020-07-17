@@ -1,3 +1,4 @@
+# How to setup kitchen-salt test env
 - download and install ruby
 - install ```bundler``` 
 - create Gemfile with following contents in directory where kitchen is required. In this case its preprod env :: 
