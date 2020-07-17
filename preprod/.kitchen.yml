@@ -102,9 +102,16 @@ suites:
      env_vars:
        TARGET_HOST: 127.0.0.1
        SUDO: false
+#Verifier with ssh login
 verifier:
-  name: shell
-  remote: true
-  command: |
-    #python3 -m pytest --junit-xml "junit-${KITCHEN_INSTANCE}.xml" --color=yes -v  "integration/${KITCHEN_SUITE}"
-    python3 -m pytest --hosts="docker://${KITCHEN_USERNAME}@${KITCHEN_CONTAINER_ID}" --junit-xml "junit-${KITCHEN_INSTANCE}.xml" --color=yes -v  "integration/${KITCHEN_SUITE}"
+    name: shell
+    remote: true
+    command: |
+      python3 -m pytest --sudo --ssh-identity-file ${KITCHEN_SSH_KEY}  --hosts="ssh://${KITCHEN_USERNAME}@${KITCHEN_HOSTNAME}:${KITCHEN_PORT}" --junit-xml "junit-${KITCHEN_INSTANCE}.xml" --color=yes -v  "test/integration/${KITCHEN_SUITE}"
+
+#Verifier with docker login
+#verifier:
+#    name : shell
+#    remote: true
+#    command: |
+#      python3 -m pytest --hosts="docker://${KITCHEN_CONTAINER_ID}" --junit-xml "junit-${KITCHEN_INSTANCE}.xml" --color=yes -v  "test/integration/${KITCHEN_SUITE}"
